@@ -239,6 +239,7 @@ func (scope *Scope) SetColumn(column interface{}, value interface{}) error {
 }
 
 // CallMethod call scope value's method, if it is a slice, will call its element's method one by one
+// 调用结构体的函数，如果是 slice 则调用每一个元素的对应函数
 func (scope *Scope) CallMethod(methodName string) {
 	if scope.Value == nil {
 		return
@@ -340,6 +341,7 @@ func (scope *Scope) QuotedTableName() (name string) {
 }
 
 // CombinedConditionSql return combined condition sql
+// 组装各种 SQL 片段
 func (scope *Scope) CombinedConditionSql() string {
 	joinSQL := scope.joinsSQL()
 	whereSQL := scope.whereSQL()
@@ -400,6 +402,7 @@ func (scope *Scope) InstanceGet(name string) (interface{}, bool) {
 }
 
 // Begin start a transaction
+// 开启事务
 func (scope *Scope) Begin() *Scope {
 	if db, ok := scope.SQLDB().(sqlDb); ok {
 		if tx, err := db.Begin(); scope.Err(err) == nil {
@@ -476,9 +479,9 @@ func (scope *Scope) quoteIfPossible(str string) string {
 func (scope *Scope) scan(rows *sql.Rows, columns []string, fields []*Field) {
 	var (
 		ignored            interface{}
-		values             = make([]interface{}, len(columns))
+		values             = make([]interface{}, len(columns)) // 每个字段的 value
 		selectFields       []*Field
-		selectedColumnsMap = map[string]int{}
+		selectedColumnsMap = map[string]int{} // 用于定位 column 的位置，减少循环次数
 		resetFields        = map[int]*Field{}
 	)
 
@@ -489,15 +492,20 @@ func (scope *Scope) scan(rows *sql.Rows, columns []string, fields []*Field) {
 		offset := 0
 		if idx, ok := selectedColumnsMap[column]; ok {
 			offset = idx + 1
+			// 已经处理过的 selectField 截断
 			selectFields = selectFields[offset:]
 		}
 
+		// 两层循环查找 column 对应的 field
+		// 在这里，数据库字段与结构体字段对应上
 		for fieldIndex, field := range selectFields {
 			if field.DBName == column {
+				// 指针处理
 				if field.Field.Kind() == reflect.Ptr {
 					values[index] = field.Field.Addr().Interface()
-				} else {
+				} else { // 正常对象处理
 					reflectValue := reflect.New(reflect.PtrTo(field.Struct.Type))
+					// Set interface Value
 					reflectValue.Elem().Set(field.Field.Addr())
 					values[index] = reflectValue.Interface()
 					resetFields[index] = field
@@ -512,6 +520,7 @@ func (scope *Scope) scan(rows *sql.Rows, columns []string, fields []*Field) {
 		}
 	}
 
+	// 最终执行 scan 操作
 	scope.Err(rows.Scan(values...))
 
 	for index, field := range resetFields {
@@ -838,6 +847,7 @@ func (scope *Scope) joinsSQL() string {
 	return strings.Join(joinConditions, " ") + " "
 }
 
+// 准备查询语句
 func (scope *Scope) prepareQuerySQL() {
 	if scope.Search.raw {
 		scope.Raw(scope.CombinedConditionSql())

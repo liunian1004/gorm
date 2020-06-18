@@ -313,11 +313,13 @@ func (s *DB) Unscoped() *DB {
 }
 
 // Attrs initialize struct with argument if record not found with `FirstOrInit` https://jinzhu.github.io/gorm/crud.html#firstorinit or `FirstOrCreate` https://jinzhu.github.io/gorm/crud.html#firstorcreate
+// 调用 FirstOrInit 函数时，如果记录不存在，使用 Attrs 参数中的字段初始化记录字段
 func (s *DB) Attrs(attrs ...interface{}) *DB {
 	return s.clone().search.Attrs(attrs...).db
 }
 
 // Assign assign result with argument regardless it is found or not with `FirstOrInit` https://jinzhu.github.io/gorm/crud.html#firstorinit or `FirstOrCreate` https://jinzhu.github.io/gorm/crud.html#firstorcreate
+// 调用 FirstOrInit 函数时，如果记录不存在，使用 Assign 初始化返回记录字段，无论是否查找到对应记录
 func (s *DB) Assign(attrs ...interface{}) *DB {
 	return s.clone().search.Assign(attrs...).db
 }

@@ -55,6 +55,8 @@ func (c *Callback) clone(logger logger) *Callback {
 //       // set error if some thing wrong happened, will rollback the creating
 //       scope.Err(errors.New("error"))
 //     })
+
+// 创建的 processor 会根据 parent 注册会 CallBack
 func (c *Callback) Create() *CallbackProcessor {
 	return &CallbackProcessor{logger: c.logger, kind: "create", parent: c}
 }
@@ -102,7 +104,9 @@ func (cp *CallbackProcessor) Register(callbackName string, callback func(scope *
 	}
 
 	cp.name = callbackName
+	// 回调函数
 	cp.processor = &callback
+	// 注册会所有的 processors
 	cp.parent.processors = append(cp.parent.processors, cp)
 	cp.parent.reorder()
 }
@@ -221,6 +225,7 @@ func sortProcessors(cps []*CallbackProcessor) []*func(scope *Scope) {
 }
 
 // reorder all registered processors, and reset CRUD callbacks
+// 重新排序所有的 processor
 func (c *Callback) reorder() {
 	var creates, updates, deletes, queries, rowQueries []*CallbackProcessor
 

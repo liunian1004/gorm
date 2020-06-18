@@ -24,6 +24,7 @@ func preloadCallback(scope *Scope) {
 		}
 	}
 
+	// 未指定 Preload 直接退出，在 First 调用时，不会执行下面的逻辑
 	if scope.Search.preload == nil || scope.HasError() {
 		return
 	}
